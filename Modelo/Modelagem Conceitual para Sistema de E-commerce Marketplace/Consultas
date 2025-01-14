@@ -1,0 +1,556 @@
+-- Criação do Banco de Dados para o cenário de um E-commerce
+create database ecommerce;
+use ecommerce;
+
+-- Criar tabela cliente
+create table cliente(
+	idCliente int auto_increment primary key,
+	Fnome varchar(10),
+	Nome_do_meio varchar(3),
+	Sobrenome varchar(20),
+	CPF char(11),
+	Endereço varchar(200),
+	Data_de_Nascimento date,
+		constraint unique_CPF__clinte unique (CPF)
+);
+	ALTER TABLE Cliente ADD NomeCompleto VARCHAR(255);
+	ALTER TABLE Cliente DROP COLUMN Fnome, DROP COLUMN Nome_do_meio, DROP COLUMN Sobrenome;
+	ALTER TABLE Cliente DROP INDEX unique_CPF__clinte;
+	ALTER TABLE Cliente ADD CONSTRAINT unique_CPF_Cliente UNIQUE (CPF);
+	ALTER TABLE Cliente DROP COLUMN Endereço;
+	ALTER TABLE Cliente
+	ADD Numero VARCHAR(10),
+	ADD Complemneto varchar (50),
+	ADD Bairro VARCHAR(50),
+	ADD Cidade VARCHAR(50) NOT NULL,
+	ADD Estado CHAR(2) NOT NULL,
+	ADD CEP CHAR(8);
+	ALTER TABLE Cliente
+	CHANGE COLUMN Complemneto Complemento varchar(50);
+	ALTER TABLE Cliente
+	ADD Telefone CHAR(11) NOT NULL,
+	ADD Email VARCHAR(50);
+	ALTER TABLE Cliente ADD CONSTRAINT unique_Email_Cliente UNIQUE (Email);
+
+	INSERT INTO Cliente (CPF, Data_de_Nascimento, NomeCompleto, Numero, Complemento, Bairro, Cidade, Estado, CEP, Telefone, Email)
+VALUES 
+('12345678901', '1990-05-15', 'João da Silva', '123', 'Apto 101', 'Centro', 'São Paulo', 'SP', '01000000', '11987654321', 'joao.silva@gmail.com'),
+('98765432100', '1985-10-30', 'Maria Oliveira', '456', 'Casa', 'Copacabana', 'Rio de Janeiro', 'RJ', '22041001', '21998765432', 'maria.oliveira@hotmail.com'),
+('45678912300', '1993-03-22', 'Carlos Souza', '789', 'Loft', 'Savassi', 'Belo Horizonte', 'MG', '30120010', '31912345678', 'carlos.souza@yahoo.com'),
+('78912345600', '2000-07-12', 'Ana Paula Costa', '1000', 'Bloco B', 'Cidade Baixa', 'Porto Alegre', 'RS', '90010001', '51976543210', 'ana.paula@gmail.com'),
+('32165498700', '1995-12-05', 'Fernando Lima', '45', 'Sala 302', 'Barra', 'Salvador', 'BA', '40140110', '71932107654', 'fernando.lima@outlook.com');
+
+
+-- Criar tabela produto
+create table Produto(
+	idProduto int auto_increment primary key,
+	Pnome varchar(10) not null,
+	Categoria ENUM ('Supermercado', 'Moda', 'Informática', 'Eletrodoméstico', 'Celular'),
+	Valor float,
+	Avaliação float
+);
+	ALTER TABLE Produto MODIFY Valor DECIMAL(10, 2);
+	ALTER TABLE Produto MODIFY COLUMN Pnome varchar(100) NOT NULL;
+	ALTER TABLE Produto CHANGE COLUMN Pnome Nome_Produto VARCHAR(100) NOT NULL;
+	
+    INSERT INTO Produto (Pnome, Categoria, Valor, Avaliação)
+VALUES
+('Arroz', 'Supermercado', 25.90, 4.5),
+('Calça Jeans', 'Moda', 129.99, 4.8),
+('Notebook', 'Informática', 2999.00, 4.7),
+('Geladeira', 'Eletrodoméstico', 1899.50, 4.6),
+('Smartphone', 'Celular', 1599.00, 4.9);
+
+
+-- Criar tabela Pagamento
+	create table Pagamento(
+		idPagamento int auto_increment primary key,
+		Forma_de_Pagamento ENUM('Cartão', 'Dois cartões', 'Pix', 'Boleto', 'Transferência'),
+		id_Pagamento_Cliente int,
+			constraint fk_Pagamento_Cliente foreign key (id_Pagamento_Cliente) references Cliente(idCliente) 
+	 );
+     
+		ALTER TABLE Pagamento ADD Valor_Total DECIMAL(10, 2) NOT NULL;
+		INSERT INTO Pagamento (Forma_de_Pagamento, Valor_Total, id_Pagamento_Cliente)
+	VALUES
+	('Pix', 100.50, 1), 
+	('Cartão', 250.00, 2), 
+	('Boleto', 75.90, 3), 
+	('Transferência', 500.00, 4), 
+	('Dois cartões', 350.00, 5); 
+    
+
+ -- Criar tabela Cartão_Crédito
+create table Cartão_Crédito(
+	idCartão_Crédito int auto_increment primary key,
+	Nome_Titular varchar(45) not null,
+	Numero_Cartão char(16) not null,
+	Data_Validade date not null,
+	id_Cartão_pagamento int not null,
+		constraint fk_Cartão_Pagamento foreign key (id_Cartão_pagamento) references Pagamento(idPagamento) 
+ );
+	ALTER TABLE Cartão_Crédito ADD CodigoSeguranca char(3);
+	INSERT INTO Cartão_Crédito (Nome_Titular, Numero_Cartão, Data_Validade, CodigoSeguranca, id_Cartão_pagamento)
+VALUES
+('João da Silva', '1234567812345678', '2025-12-31', '123', 1),
+('Maria Oliveira', '8765432187654321', '2024-11-30', '456', 2),
+('Carlos Souza', '1234123412341234', '2026-05-15', '789', 3),
+('Ana Paula Costa', '5678567856785678', '2027-08-20', '321', 4),
+('Fernando Lima', '4321432143214321', '2024-02-28', '654', 5);
+
+
+
+-- Criar tabela Pedido
+create table Pedido(
+	idPedido int auto_increment primary key,
+	id_Pedido_Cliente int,
+	Status_Pedidos ENUM('Em andamento', 'Em processamento', 'Enviado', 'Entregue', 'Cancelado') default 'Em processamento',
+	Descrição varchar(255),
+	Frete float default 10,
+		constraint fk_Pedido_Cliente foreign key (id_Pedido_Cliente) references Cliente(idCliente) 
+); 
+	ALTER TABLE Pedido MODIFY Frete DECIMAL(10, 2);
+	INSERT INTO Pedido (id_Pedido_Cliente, Status_Pedidos, Descrição, Frete)
+VALUES
+(1, 'Em processamento', 'Pedido contendo 3 produtos variados.', 15.50),
+(2, 'Enviado', 'Pedido com itens de informática.', 20.00),
+(3, 'Entregue', 'Pedido de roupas e acessórios.', 12.00),
+(4, 'Cancelado', 'Pedido de eletrodomésticos.', 18.75),
+(5, 'Em andamento', 'Pedido de produtos alimentícios.', 10.00);
+
+
+-- Criar tabela Entrega
+create table Entrega(
+	idEntrega int auto_increment primary key,
+	Status_Entrega ENUM('Em processamento', 'Enviado', 'Entregue', 'Cancelado') default 'Em processamento',
+	Codigo_Rastreio varchar(45),
+	Data_Envio date, 
+	Data_Entrega_Prevista date,
+	id_Entrega_Pedido int,
+		constraint fk_Pedido_Entrega foreign key (id_Entrega_Pedido) references Pedido(idPedido) 
+); 
+	ALTER TABLE Entrega ADD Data_Entrega_Real DATE;
+	INSERT INTO Entrega (Status_Entrega, Codigo_Rastreio, Data_Envio, Data_Entrega_Prevista, id_Entrega_Pedido)
+VALUES
+('Em processamento', NULL, NULL, '2025-01-15', 1),
+('Enviado', 'RA123456789BR', '2025-01-10', '2025-01-15', 2),
+('Entregue', 'RA987654321BR', '2025-01-05', '2025-01-10', 3),
+('Cancelado', NULL, NULL, NULL, 4),
+('Enviado', 'RA456789123BR', '2025-01-08', '2025-01-13', 5);
+
+-- Atualizando os registros existentes com valores para Data_Entrega_Real
+	UPDATE Entrega
+	SET Data_Entrega_Real = '2025-01-10'
+	WHERE idEntrega = 3; 
+
+
+-- Criar tabela Estoque
+create table Estoque(
+	idEstoque int auto_increment primary key,
+	Localização varchar(200),
+	Quantidade int default 0
+); 
+	INSERT INTO Estoque (Localização, Quantidade)
+VALUES
+('São Paulo', 500),
+('São Paulo', 300),
+('Rio de Janeiro', 200),
+('Belo Horizonte', 150),
+('Recife', 100);
+
+
+-- Criar tabela Fornecedor
+create table Fornecedor(
+	idFornecedor int auto_increment primary key,
+	Razão_Social varchar(45) not null,
+	CNPJ char (14) not null,
+	Contato char (11) not null,
+		constraint unique_Fornecedor unique (CNPJ)
+); 
+	INSERT INTO Fornecedor (Razão_Social, CNPJ, Contato)
+VALUES
+('Supermercado Nacional', '12345678000100', '11998765432'),
+('Eletrônicos Brasil', '98765432000111', '21987654321'),
+('Fashion Distribuidora', '45678912000122', '31976543210'),
+('Eletrodomésticos Center', '32165487000133', '51965432100'),
+('Alimentos Nordeste', '65498731000144', '71954321098');
+
+    
+-- Criar tabela Vendedor
+create table Vendedor(
+	idVendedor int auto_increment primary key,
+	Razão_Social varchar(45) not null,
+	Localização varchar(200),
+	CNPJ char (14),
+	CPF char (11),
+	Contato char (11) not null,
+		constraint unique_CNPJ_Vendedor unique (CNPJ),
+		constraint unique_CPF_Vendedor unique (CPF)
+); 
+	INSERT INTO Vendedor (Razão_Social, Localização, CNPJ, CPF, Contato)
+VALUES
+('Varejo Nacional', 'Rua das Flores, 123, São Paulo - SP', '12345678000100', NULL, '11987654321'),
+('Eletrônicos Top', 'Av. Brasil, 456, Rio de Janeiro - RJ', '98765432000111', NULL, '21987654322'),
+('Moda Estilo', 'Rua da Moda, 789, Belo Horizonte - MG', NULL, '45678912300', '31987654333'),
+('Eletro Center', 'Av. Central, 1010, Porto Alegre - RS', '32165487000133', NULL, '51987654344'),
+('Alimentos do Nordeste', 'Rua das Palmeiras, 202, Recife - PE', NULL, '65498732100', '71987654355');
+
+
+-- Criar tabela produto_Vendedor
+create table Produto_Vendedor(
+	idPVvendedor int,
+	idPVproduto int,
+	Quantidade_Produto int default 1,
+		primary key (idPVvendedor,idPVproduto),
+		constraint fk_produto_Vendedor foreign key (idPVvendedor) references Vendedor(idVendedor),
+		constraint fk_produto_Produto foreign key (idPVproduto) references Produto(idProduto)
+);
+	INSERT INTO Produto_Vendedor (idPVvendedor, idPVproduto, Quantidade_Produto)
+VALUES
+(1, 1, 50), 
+(1, 2, 30), 
+(2, 3, 20),
+(3, 2, 40), 
+(4, 4, 15), 
+(5, 5, 25); 
+
+
+-- Criar tabela Produto_Pedido
+create table Produto_Pedido(
+	idPPproduto int,
+	idPPpedido int,
+	Quantidade int default 1,
+	PPstatus ENUM('Disponível', 'Sem estoque') default 'Disponível',
+		primary key (idPPproduto, idPPpedido),
+		constraint fk_produto_PPproduto foreign key (idPPproduto) references Produto(idProduto),
+		constraint fk_Produto_Pedido foreign key (idPPpedido) references Pedido(idPedido)
+);
+	INSERT INTO Produto_Pedido (idPPproduto, idPPpedido, Quantidade, PPstatus)
+VALUES
+(1, 1, 2, 'Disponível'), 
+(2, 1, 1, 'Disponível'), 
+(3, 2, 1, 'Disponível'), 
+(2, 3, 3, 'Disponível'), 
+(4, 4, 1, 'Disponível'),
+(5, 5, 2, 'Disponível'); 
+
+
+-- Criar tabela Produto_Fornecedor
+create table Produto_Fornecedor(
+	idPFproduto int,
+	idPFfornecedor int,
+		primary key (idPFproduto, idPFfornecedor),
+		constraint fk_produto_PFproduto foreign key (idPFproduto) references Produto(idProduto),
+		constraint fk_produto_Fornecedor foreign key (idPFfornecedor) references Fornecedor(idFornecedor)
+);
+	INSERT INTO Produto_Fornecedor (idPFproduto, idPFfornecedor)
+VALUES
+(1, 1), 
+(2, 3), 
+(3, 2), 
+(4, 4), 
+(5, 5); 
+
+
+-- Criar tabela Produto_Estoque
+create table Produto_Estoque(
+	idPEestoque int,
+	idPEproduto int,
+		primary key (idPEestoque, idPEproduto),
+		constraint fk_produto_Estoque foreign key (idPEestoque) references Estoque(idEstoque),
+		constraint fk_produto_PEproduto foreign key (idPEproduto) references Produto(idproduto)
+);
+
+	INSERT INTO Produto_Estoque (idPEestoque, idPEproduto)
+VALUES
+(1, 1), 
+(1, 2), 
+(2, 3), 
+(3, 4), 
+(4, 5); 
+
+
+
+
+
+-- Consulta para contar o número de pedidos feitos por cada cliente
+SELECT 
+    c.NomeCompleto AS Cliente, 
+    COUNT(p.idPedido) AS TotalPedidos
+FROM Cliente c
+LEFT JOIN Pedido p ON c.idCliente = p.id_Pedido_Cliente
+GROUP BY c.idCliente
+ORDER BY TotalPedidos DESC; 
+
+
+
+-- Consulta para verificar se algum vendedor também está cadastrado como fornecedor (baseado em CNPJ)
+SELECT 
+    v.Razão_Social AS Vendedor, 
+    f.Razão_Social AS Fornecedor
+FROM Vendedor v
+INNER JOIN Fornecedor f 
+    ON v.CNPJ = f.CNPJ; 
+
+
+
+-- Consulta para calcular o total de frete por status de pedido
+SELECT 
+	Status_Pedidos, SUM(Frete) AS TotalFrete
+FROM Pedido
+GROUP BY Status_Pedidos;
+
+
+-- Consulta para listar todas as entregas com informações dos pedidos
+SELECT 
+    e.idEntrega, 
+    e.Status_Entrega, 
+    e.Codigo_Rastreio, 
+    e.Data_Envio, 
+    e.Data_Entrega_Prevista, 
+    p.Descrição AS Pedido
+FROM Entrega e
+JOIN Pedido p ON e.id_Entrega_Pedido = p.idPedido;
+
+
+
+-- Consulta para somar a quantidade total de produtos em estoque
+SELECT 
+	SUM(Quantidade) AS TotalProdutos
+FROM Estoque;
+
+
+
+-- Consulta para filtrar locais com baixo estoque (ex.: abaixo de 200 unidades)
+SELECT 
+	Localização, Quantidade
+FROM Estoque
+WHERE Quantidade < 200;
+
+
+
+-- Consulta para listar produtos, fornecedores e a localização dos estoques
+SELECT 
+    p.Nome_Produto AS Produto,
+    f.Razão_Social AS Fornecedor,
+    e.Localização AS Estoque
+FROM Produto p
+INNER JOIN Produto_Fornecedor pf ON p.idProduto = pf.idPFproduto
+INNER JOIN Fornecedor f ON pf.idPFfornecedor = f.idFornecedor
+INNER JOIN Produto_Estoque pe ON p.idProduto = pe.idPEproduto
+INNER JOIN Estoque e ON pe.idPEestoque = e.idEstoque
+ORDER BY Produto, Fornecedor;
+
+
+
+-- Consulta para encontrar um fornecedor específico pelo CNPJ
+SELECT * 
+FROM Fornecedor
+WHERE CNPJ = '12345678000100';
+
+
+
+-- Consulta para buscar vendedores em uma localização específica
+SELECT 
+	Razão_Social, Localização
+FROM Vendedor
+WHERE Localização LIKE '%São Paulo%';
+
+
+
+-- Consulta para contar quantos produtos estão em cada estoque
+SELECT 
+    e.Localização AS Estoque,
+    COUNT(pe.idPEproduto) AS TotalProdutos
+FROM Produto_Estoque pe
+JOIN Estoque e ON pe.idPEestoque = e.idEstoque
+GROUP BY e.idEstoque;
+
+
+
+-- Consulta para listar fornecedores e os produtos que eles fornecem
+SELECT 
+    f.Razão_Social AS Fornecedor, 
+    p.Nome_Produto AS Produto
+FROM Produto_Fornecedor pf
+INNER JOIN Fornecedor f ON pf.idPFfornecedor = f.idFornecedor
+INNER JOIN Produto p ON pf.idPFproduto = p.idProduto
+ORDER BY Fornecedor, Produto; 
+
+
+
+-- Consulta para calcular o valor total de cada pedido (Quantidade x Valor do Produto)
+SELECT 
+    p.idPedido AS Pedido, 
+    c.NomeCompleto AS Cliente, 
+    SUM(pp.Quantidade * prod.Valor) AS ValorTotal
+FROM Pedido p
+INNER JOIN Cliente c ON p.id_Pedido_Cliente = c.idCliente
+INNER JOIN Produto_Pedido pp ON p.idPedido = pp.idPPpedido
+INNER JOIN Produto prod ON pp.idPPproduto = prod.idProduto
+GROUP BY p.idPedido
+ORDER BY ValorTotal DESC; 
+
+
+-- Consulta para listar produtos mais vendidos com suas quantidades
+SELECT 
+    p.Nome_Produto AS Produto, 
+    SUM(pp.Quantidade) AS TotalVendido
+FROM Produto p
+INNER JOIN Produto_Pedido pp ON p.idProduto = pp.idPPproduto
+GROUP BY p.idProduto
+ORDER BY TotalVendido DESC; 
+
+
+
+-- Consulta para listar clientes que fizeram mais de 2 pedidos
+SELECT 
+    c.NomeCompleto AS Cliente, 
+    COUNT(p.idPedido) AS TotalPedidos
+FROM Cliente c
+INNER JOIN Pedido p ON c.idCliente = p.id_Pedido_Cliente
+GROUP BY c.idCliente
+HAVING COUNT(p.idPedido) > 2 
+ORDER BY TotalPedidos DESC;
+
+
+
+-- Consulta para listar detalhes de cada pedido: cliente, produtos, quantidade, valor total e status
+SELECT 
+    p.idPedido AS Pedido,
+    c.NomeCompleto AS Cliente,
+    prod.Nome_Produto AS Produto,
+    pp.Quantidade,
+    (pp.Quantidade * prod.Valor) AS ValorProduto,
+    p.Status_Pedidos AS StatusPedido,
+    e.Status_Entrega AS StatusEntrega
+FROM Pedido p
+INNER JOIN Cliente c ON p.id_Pedido_Cliente = c.idCliente
+INNER JOIN Produto_Pedido pp ON p.idPedido = pp.idPPpedido
+INNER JOIN Produto prod ON pp.idPPproduto = prod.idProduto
+LEFT JOIN Entrega e ON p.idPedido = e.id_Entrega_Pedido
+ORDER BY Pedido, Cliente;
+
+
+
+-- Consulta para listar produtos com valor abaixo de R$500
+SELECT 
+    Nome_Produto AS Produto, 
+    Categoria, 
+    Valor
+FROM Produto
+WHERE Valor < 500; 
+
+
+
+-- Consulta para listar produtos com preço entre R$500 e R$2000
+SELECT 
+    Nome_Produto AS Produto, 
+    Categoria, 
+    Valor
+FROM Produto
+WHERE Valor BETWEEN 500 AND 2000; 
+
+
+
+-- Consulta para listar produtos que estão disponíveis em estoque e custam mais de R$1000
+SELECT 
+    p.Nome_Produto AS Produto, 
+    e.Localização AS Estoque,
+    p.Valor AS Preço
+FROM Produto p
+INNER JOIN Produto_Estoque pe ON p.idProduto = pe.idPEproduto
+INNER JOIN Estoque e ON pe.idPEestoque = e.idEstoque
+WHERE p.Valor > 1000 
+   AND e.Localização IS NOT NULL 
+ORDER BY p.Valor DESC, p.Nome_Produto;
+
+
+
+-- Consulta para listar produtos e a soma de quantidades vendidas
+SELECT 
+    p.Nome_Produto AS Produto, 
+    SUM(pp.Quantidade) AS QuantidadeVendida
+FROM Produto p
+INNER JOIN Produto_Pedido pp ON p.idProduto = pp.idPPproduto
+GROUP BY p.idProduto
+HAVING SUM(pp.Quantidade) >= 1 
+ORDER BY QuantidadeVendida DESC, p.Nome_Produto;
+
+
+
+-- Consulta para identificar o tipo de pagamento mais utilizado
+SELECT 
+    p.Forma_de_Pagamento AS TipoPagamento, 
+    COUNT(p.idPagamento) AS TotalPagamentos
+FROM Pagamento p
+GROUP BY p.Forma_de_Pagamento
+ORDER BY TotalPagamentos DESC; 
+
+
+
+-- Consulta para listar os clientes que mais gastam, somando os valores de pagamento
+SELECT 
+    c.NomeCompleto AS Cliente, 
+    SUM(p.Valor_Total) AS TotalGasto
+FROM Cliente c
+INNER JOIN Pagamento p ON c.idCliente = p.id_Pagamento_Cliente
+GROUP BY c.idCliente
+HAVING SUM(p.Valor_Total) > 0 
+ORDER BY TotalGasto DESC; 
+
+
+
+-- Consulta para identificar o vendedor que mais vendeu produtos
+SELECT 
+    v.Razão_Social AS Vendedor, 
+    SUM(pv.Quantidade_Produto) AS TotalVendas
+FROM Vendedor v
+INNER JOIN Produto_Vendedor pv ON v.idVendedor = pv.idPVvendedor
+GROUP BY v.idVendedor
+HAVING SUM(pv.Quantidade_Produto) > 0 
+ORDER BY TotalVendas DESC; 
+
+
+
+-- Consulta para identificar o fornecedor que mais fornece produtos
+SELECT 
+    f.Razão_Social AS Fornecedor, 
+    COUNT(pf.idPFproduto) AS ProdutosFornecidos
+FROM Fornecedor f
+INNER JOIN Produto_Fornecedor pf ON f.idFornecedor = pf.idPFfornecedor
+GROUP BY f.idFornecedor
+HAVING COUNT(pf.idPFproduto) > 0 
+ORDER BY ProdutosFornecidos DESC; 
+
+
+
+-- Consulta para identificar pedidos com frete acima de R$15
+SELECT 
+    p.idPedido AS Pedido, 
+    c.NomeCompleto AS Cliente, 
+    p.Frete AS Frete
+FROM Pedido p
+INNER JOIN Cliente c ON p.id_Pedido_Cliente = c.idCliente
+WHERE p.Frete > 15 
+ORDER BY p.Frete DESC; 
+
+
+
+-- Consulta para identificar fornecedores de produtos eletrônicos
+SELECT 
+    f.Razão_Social AS Fornecedor, 
+    p.Nome_Produto AS Produto, 
+    p.Categoria AS Categoria
+FROM Fornecedor f
+INNER JOIN Produto_Fornecedor pf ON f.idFornecedor = pf.idPFfornecedor
+INNER JOIN Produto p ON pf.idPFproduto = p.idProduto
+WHERE p.Categoria = 'Informática' OR p.Categoria = 'Eletrodoméstico' 
+ORDER BY Fornecedor, Produto;
+
+
+
+
+
+
+
